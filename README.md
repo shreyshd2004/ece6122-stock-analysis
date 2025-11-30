@@ -145,6 +145,9 @@ make benchmark
 
 # Large scale test (100 stocks)
 make test-large
+
+# Run unit tests
+make test
 ```
 
 ## Performance Metrics
@@ -156,6 +159,11 @@ The system measures and reports:
 - **Speedup**: Ratio of sequential to parallel time
 - **Efficiency**: Speedup normalized by number of threads
 - **Correctness validation**: Ensures parallel results match sequential results
+- **Visual Performance Metrics**: ASCII-based charts and plots for:
+  - Speedup visualization (actual vs theoretical)
+  - Efficiency charts
+  - Execution time comparisons
+  - Comprehensive performance reports
 
 ### Expected Performance
 
@@ -204,12 +212,16 @@ finalproject/
 │   ├── TechnicalIndicator.h    # Indicator computation class
 │   ├── Scheduler.h             # Orchestration and scheduling
 │   ├── ThreadSafeQueue.h       # Thread-safe queue implementation
-│   └── StockDataFetcher.h       # Socket-based data fetching
+│   ├── StockDataFetcher.h      # Socket-based data fetching
+│   └── PerformanceVisualizer.h # Visual performance metrics
 ├── src/
 │   ├── TechnicalIndicator.cpp  # Indicator implementation
 │   ├── Scheduler.cpp           # Scheduler implementation
 │   ├── StockDataFetcher.cpp    # Socket implementation
+│   ├── PerformanceVisualizer.cpp # Visual metrics implementation
 │   └── main.cpp                # Main integration and testing
+├── tests/
+│   └── test_technical_indicator.cpp # Unit tests
 ├── Makefile                    # Build configuration
 └── README.md                   # This file
 ```
@@ -240,7 +252,7 @@ finalproject/
 - Technical indicator computation class (TechnicalIndicator)
 - OpenMP parallelization for data parallelism
 - Performance optimization of calculation engine
-- Unit tests for indicator correctness
+- Unit tests for indicator correctness (tests/test_technical_indicator.cpp)
 
 ### Shreyashi Dutta
 - Scheduler and orchestration layer (Scheduler class)
@@ -251,6 +263,7 @@ finalproject/
 ### Tanmay Arvind
 - System integration (main.cpp)
 - Performance benchmarking and validation
+- Visual performance metrics (PerformanceVisualizer class)
 - Scalability testing with varying stock counts
 - Documentation and final report
 
@@ -258,8 +271,11 @@ finalproject/
 
 The system includes:
 
+- **Unit Tests**: Comprehensive unit tests for TechnicalIndicator class
+  - Run tests: `make test`
+  - Tests cover: SMA, RSI, MACD calculations, signal generation, parallel consistency, edge cases
 - **Correctness validation**: Compares parallel vs sequential results
-- **Performance benchmarking**: Measures speedup and efficiency
+- **Performance benchmarking**: Measures speedup and efficiency with visual metrics
 - **Scalability testing**: Tests with varying numbers of stocks
 - **Stress testing**: Validates system under load
 

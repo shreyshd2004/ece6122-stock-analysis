@@ -35,7 +35,8 @@ private:
     // Socket connection methods
     bool connectToServer(const std::string& host, int port);
     void disconnect();
-    std::string sendHTTPRequest(const std::string& host, const std::string& path);
+    std::string sendHTTPRequest(const std::string& host, int port, const std::string& path);
+    std::string fetchViaCurl(const std::string& symbol);  // Fallback for HTTPS
     std::string parseJSONResponse(const std::string& response, const std::string& symbol);
     
     // Parse stock data from API response
@@ -51,12 +52,11 @@ private:
     
     // API configuration - Alpha Vantage API
     static constexpr const char* API_HOST = "www.alphavantage.co";
-    static constexpr int API_PORT = 443;  // HTTPS port
+    static constexpr int API_PORT = 80;  // HTTP port (for socket demo)
     static constexpr const char* API_KEY = "P0HB29ZLXIPNGG3U";
     
-    // Note: Alpha Vantage uses HTTPS (port 443) which requires TLS/SSL
-    // For basic socket demonstration, this shows the HTTP request structure
-    // Full HTTPS requires TLS implementation (OpenSSL or similar library)
+    // Note: Alpha Vantage requires HTTPS, so we use curl as primary method
+    // Socket-based HTTP is kept for demonstration of socket programming concepts
 };
 
 #endif // STOCK_DATA_FETCHER_H

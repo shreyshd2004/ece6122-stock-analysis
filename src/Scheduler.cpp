@@ -94,7 +94,6 @@ void Scheduler::schedulerThread() {
 
 void Scheduler::dataFetcherThread() {
     std::cout << "[DataFetcher] Thread started\n";
-    std::cout << "[DataFetcher] Using socket connections for real-time data fetching\n";
     
     StockDataFetcher fetcher;
     fetcher.setTimeout(5);
@@ -107,15 +106,10 @@ void Scheduler::dataFetcherThread() {
         
         if (shouldStop_) break;
         
-        std::cout << "[DataFetcher] Fetching data via socket connections...\n";
-        
         for (const auto& symbol : symbols) {
             TechnicalIndicator::StockData stockData = fetcher.fetchStockData(symbol);
             dataQueue_.push(stockData);
         }
-        
-        std::cout << "[DataFetcher] Fetched data for " << symbols.size() 
-                  << " stocks using socket connections\n";
     }
     
     std::cout << "[DataFetcher] Thread stopped\n";

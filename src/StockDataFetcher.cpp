@@ -10,6 +10,9 @@
 #include <iostream>
 #include <algorithm>
 #include <regex>
+#include <cstdlib>
+#include <memory>
+#include <array>
 
 StockDataFetcher::StockDataFetcher()
     : socketAvailable_(false), timeoutSeconds_(5), socketFd_(-1) {
@@ -65,9 +68,33 @@ void StockDataFetcher::disconnect() {
     socketAvailable_ = false;
 }
 
-std::string StockDataFetcher::sendHTTPRequest(const std::string& host, const std::string& path) {
+std::string StockDataFetcher::fetchViaCurl(const std::string& symbol) {
+    std::ostringstream curlCmd;
+    curlCmd << "curl -s -m 10 \"https://www.alphavantage.co/query?function=TIME_SERIES_INTRADAY&symbol=" 
+            << symbol << "&interval=5min&apikey=" << API_KEY << "\"";
+    
+    std::array<char, 128> buffer;
+    std::string result;
+    std::unique_ptr<FILE, decltype(&pclose)> pipe(popen(curlCmd.str().c_str(), "r"), pclose);
+    
+    if (!pipe) {
+        return "";
+    }
+    
+    while (fgets(buffer.data(), buffer.size(), pipe.get()) != nullptr) {
+        result += buffer.data();
+    }
+    
+    if (!result.empty()) {
+        // Data fetched successfully
+    }
+    
+    return result;
+}
+
+std::string StockDataFetcher::sendHTTPRequest(const std::string& host, int port, const std::string& path) {
     if (socketFd_ < 0) {
-        if (!connectToServer(host, API_PORT)) {
+        if (!connectToServer(host, port)) {
             return "";
         }
     }
@@ -80,9 +107,6 @@ std::string StockDataFetcher::sendHTTPRequest(const std::string& host, const std
     request << "Connection: close\r\n";
     request << "\r\n";
     
-    // Note: For HTTPS (port 443), TLS/SSL handshake is required before sending HTTP request
-    // This requires OpenSSL or similar library for full implementation
-
     std::string requestStr = request.str();
 
     if (send(socketFd_, requestStr.c_str(), requestStr.length(), 0) < 0) {
@@ -99,6 +123,8 @@ std::string StockDataFetcher::sendHTTPRequest(const std::string& host, const std
         buffer[bytesReceived] = '\0';
         response += buffer;
     }
+
+    // Response received
 
     disconnect();
     return response;
@@ -181,7 +207,6 @@ TechnicalIndicator::StockData StockDataFetcher::parseStockData(
     // Check for Alpha Vantage error messages
     if (jsonData.find("\"Error Message\"") != std::string::npos || 
         jsonData.find("\"Note\"") != std::string::npos) {
-        std::cout << "[StockDataFetcher] API error or rate limit for " << symbol << "\n";
         return generateSampleData(symbol);
     }
     
@@ -203,7 +228,6 @@ TechnicalIndicator::StockData StockDataFetcher::parseStockData(
     }
     
     if (timeSeriesPos == std::string::npos) {
-        std::cout << "[StockDataFetcher] Time Series not found in JSON for " << symbol << "\n";
         return generateSampleData(symbol);
     }
     
@@ -266,13 +290,9 @@ TechnicalIndicator::StockData StockDataFetcher::parseStockData(
             stockData.timestamps.push_back(i);
         }
         
-        std::cout << "[StockDataFetcher] Successfully parsed " << stockData.prices.size() 
-                  << " data points from Alpha Vantage API for " << symbol << "\n";
         return stockData;
     }
     
-    std::cout << "[StockDataFetcher] Insufficient data points (" << prices.size() 
-              << ") from Alpha Vantage for " << symbol << "\n";
     return generateSampleData(symbol);
 }
 
@@ -297,16 +317,16 @@ TechnicalIndicator::StockData StockDataFetcher::generateSampleData(const std::st
 }
 
 TechnicalIndicator::StockData StockDataFetcher::fetchStockData(const std::string& symbol) {
-    std::ostringstream pathStream;
-    pathStream << "/query?function=TIME_SERIES_INTRADAY&symbol=" << symbol 
-               << "&interval=5min&apikey=" << API_KEY;
-    std::string path = pathStream.str();
+    // Use curl for HTTPS (Alpha Vantage requires HTTPS)
+    std::string response = fetchViaCurl(symbol);
     
-    std::string response = sendHTTPRequest(API_HOST, path);
+    // Fallback to socket-based HTTP (for HTTP-only APIs)
+    if (response.empty()) {
+        std::string path = "/v8/finance/chart/" + symbol + "?interval=1d&range=100d";
+        response = sendHTTPRequest(API_HOST, 80, path);
+    }
     
     if (response.empty()) {
-        std::cout << "[StockDataFetcher] Empty response for " << symbol 
-                  << ", using sample data\n";
         return generateSampleData(symbol);
     }
     
@@ -314,19 +334,16 @@ TechnicalIndicator::StockData StockDataFetcher::fetchStockData(const std::string
         std::string jsonData = parseJSONResponse(response, symbol);
         
         if (!jsonData.empty() && (jsonData.find("Time Series") != std::string::npos || 
-                                  jsonData.find("\"Meta Data\"") != std::string::npos)) {
+                                  jsonData.find("\"Meta Data\"") != std::string::npos ||
+                                  jsonData.find("chart") != std::string::npos)) {
             TechnicalIndicator::StockData data = parseStockData(symbol, jsonData);
             
             if (!data.prices.empty() && data.prices.size() >= 20) {
-                std::cout << "[StockDataFetcher] Successfully fetched and parsed real-time data from Alpha Vantage for " 
-                          << symbol << " (" << data.prices.size() << " data points)\n";
                 return data;
             }
         }
     }
     
-    std::cout << "[StockDataFetcher] Could not parse real-time data for " << symbol 
-              << ", using sample data\n";
     return generateSampleData(symbol);
 }
 

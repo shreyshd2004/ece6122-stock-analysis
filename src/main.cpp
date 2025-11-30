@@ -1,5 +1,6 @@
 #include "../include/TechnicalIndicator.h"
 #include "../include/Scheduler.h"
+#include "../include/PerformanceVisualizer.h"
 #include <iostream>
 #include <chrono>
 #include <iomanip>
@@ -22,16 +23,17 @@ public:
     }
     
     double getElapsedSeconds() const {
-        auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(
+        auto duration = std::chrono::duration_cast<std::chrono::microseconds>(
+            endTime_ - startTime_);
+        return duration.count() / 1000000.0;
+    }
+    
+    double getElapsedMilliseconds() const {
+        auto duration = std::chrono::duration_cast<std::chrono::microseconds>(
             endTime_ - startTime_);
         return duration.count() / 1000.0;
     }
     
-    double getElapsedMilliseconds() const {
-        auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(
-            endTime_ - startTime_);
-        return duration.count();
-    }
 
 private:
     std::chrono::high_resolution_clock::time_point startTime_;
@@ -153,34 +155,50 @@ int main(int argc, char* argv[]) {
     if (benchmark) {
         std::cout << "=== Performance Benchmark ===\n";
         
+        const int iterations = std::max(1, 1000 / numStocks);
+        std::cout << "Running " << iterations << " iterations for accurate timing...\n\n";
+        
         PerformanceMonitor monitor;
         
         std::cout << "Running sequential computation...\n";
         monitor.start();
-        auto sequentialResults = computeSequential(stocks);
+        for (int i = 0; i < iterations; ++i) {
+            auto sequentialResults = computeSequential(stocks);
+            (void)sequentialResults;
+        }
         monitor.stop();
-        double sequentialTime = monitor.getElapsedSeconds();
-        std::cout << "Sequential time: " << sequentialTime << " seconds\n";
+        double sequentialTime = monitor.getElapsedSeconds() / iterations;
+        std::cout << "Sequential time: " << std::fixed << std::setprecision(6) 
+                  << sequentialTime << " seconds per iteration\n";
         
         std::cout << "Running parallel computation...\n";
         monitor.start();
-        auto parallelResults = computeParallel(stocks);
+        for (int i = 0; i < iterations; ++i) {
+            auto parallelResults = computeParallel(stocks);
+            (void)parallelResults;
+        }
         monitor.stop();
-        double parallelTime = monitor.getElapsedSeconds();
-        std::cout << "Parallel time: " << parallelTime << " seconds\n";
+        double parallelTime = monitor.getElapsedSeconds() / iterations;
+        std::cout << "Parallel time: " << std::fixed << std::setprecision(6) 
+                  << parallelTime << " seconds per iteration\n";
         
-        double speedup = sequentialTime / parallelTime;
-        double efficiency = speedup / numThreads;
+        double speedup = (parallelTime > 0) ? sequentialTime / parallelTime : 0.0;
+        double efficiency = (numThreads > 0 && speedup > 0) ? speedup / numThreads : 0.0;
         
         std::cout << "\n=== Performance Summary ===\n";
-        std::cout << "Sequential time: " << std::fixed << std::setprecision(3) 
-                  << sequentialTime << " seconds\n";
-        std::cout << "Parallel time: " << std::fixed << std::setprecision(3) 
-                  << parallelTime << " seconds\n";
-        std::cout << "Speedup: " << std::fixed << std::setprecision(2) 
-                  << speedup << "x\n";
-        std::cout << "Efficiency: " << std::fixed << std::setprecision(2) 
-                  << (efficiency * 100) << "%\n";
+        if (speedup > 0) {
+            PerformanceVisualizer::generateReport(sequentialTime, parallelTime, 
+                                                  speedup, efficiency, numThreads);
+            PerformanceVisualizer::plotSpeedup(speedup, numThreads);
+            PerformanceVisualizer::plotEfficiency(efficiency, numThreads);
+            PerformanceVisualizer::plotExecutionTime(sequentialTime, parallelTime);
+        } else {
+            std::cout << "Speedup: N/A (computation too fast to measure)\n";
+            std::cout << "Efficiency: N/A\n";
+        }
+        
+        auto sequentialResults = computeSequential(stocks);
+        auto parallelResults = computeParallel(stocks);
         
         bool resultsMatch = true;
         if (sequentialResults.size() == parallelResults.size()) {
@@ -209,7 +227,7 @@ int main(int argc, char* argv[]) {
         std::cout << "\n=== Starting Scheduler Mode ===\n";
         
         TechnicalIndicator indicator;
-        Scheduler scheduler(10);
+        Scheduler scheduler(3600); // Hourly analysis cycles
         
         scheduler.setAnalysisCallback([&indicator, &scheduler](
             const std::vector<TechnicalIndicator::StockData>& stocks) {
@@ -241,8 +259,8 @@ int main(int argc, char* argv[]) {
         
         scheduler.start();
         
-        std::cout << "Running scheduler for 30 seconds...\n";
-        std::this_thread::sleep_for(std::chrono::seconds(30));
+        std::cout << "Running scheduler (hourly cycles). Press Ctrl+C to stop...\n";
+        std::this_thread::sleep_for(std::chrono::hours(1));
         
         scheduler.stop();
         std::cout << "\nScheduler stopped\n";
