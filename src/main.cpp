@@ -1,12 +1,3 @@
-/**
- * Main Integration File
- * 
- * Integrates the OpenMP calculation engine and threaded orchestration layer
- * into a cohesive, high-performance application.
- * 
- * Author: Tanmay Arvind
- */
-
 #include "../include/TechnicalIndicator.h"
 #include "../include/Scheduler.h"
 #include <iostream>
@@ -20,7 +11,6 @@
 #include <omp.h>
 #endif
 
-// Performance measurement utilities
 class PerformanceMonitor {
 public:
     void start() {
@@ -48,7 +38,6 @@ private:
     std::chrono::high_resolution_clock::time_point endTime_;
 };
 
-// Generate sample stock data for testing
 std::vector<TechnicalIndicator::StockData> generateSampleData(int numStocks) {
     std::vector<TechnicalIndicator::StockData> stocks;
     std::random_device rd;
@@ -67,10 +56,9 @@ std::vector<TechnicalIndicator::StockData> generateSampleData(int numStocks) {
         TechnicalIndicator::StockData stock;
         stock.symbol = symbols[i];
         
-        // Generate 100 days of historical data
         double basePrice = priceDist(gen);
         for (int day = 0; day < 100; ++day) {
-            basePrice += (priceDist(gen) - basePrice) * 0.1; // Random walk
+            basePrice += (priceDist(gen) - basePrice) * 0.1;
             stock.prices.push_back(basePrice);
             stock.volumes.push_back(volumeDist(gen));
             stock.timestamps.push_back(day);
@@ -79,7 +67,6 @@ std::vector<TechnicalIndicator::StockData> generateSampleData(int numStocks) {
         stocks.push_back(stock);
     }
     
-    // If more stocks requested, duplicate with variations
     while (static_cast<int>(stocks.size()) < numStocks) {
         TechnicalIndicator::StockData stock = stocks[stocks.size() % symbols.size()];
         stock.symbol = "STOCK" + std::to_string(stocks.size());
@@ -89,7 +76,6 @@ std::vector<TechnicalIndicator::StockData> generateSampleData(int numStocks) {
     return stocks;
 }
 
-// Sequential baseline for comparison
 std::vector<TechnicalIndicator::IndicatorResult> computeSequential(
     const std::vector<TechnicalIndicator::StockData>& stocks) {
     
@@ -103,7 +89,6 @@ std::vector<TechnicalIndicator::IndicatorResult> computeSequential(
     return results;
 }
 
-// Parallel computation
 std::vector<TechnicalIndicator::IndicatorResult> computeParallel(
     const std::vector<TechnicalIndicator::StockData>& stocks) {
     
@@ -144,7 +129,6 @@ int main(int argc, char* argv[]) {
     std::cout << "OpenMP not available - running sequentially\n";
     #endif
     
-    // Parse command line arguments
     int numStocks = 10;
     bool runScheduler = false;
     bool benchmark = true;
@@ -162,18 +146,15 @@ int main(int argc, char* argv[]) {
     std::cout << "Number of stocks: " << numStocks << "\n";
     std::cout << "Run scheduler: " << (runScheduler ? "Yes" : "No") << "\n\n";
     
-    // Generate sample data
     std::cout << "Generating sample stock data...\n";
     auto stocks = generateSampleData(numStocks);
     std::cout << "Generated data for " << stocks.size() << " stocks\n\n";
     
     if (benchmark) {
-        // Benchmark sequential vs parallel
         std::cout << "=== Performance Benchmark ===\n";
         
         PerformanceMonitor monitor;
         
-        // Sequential computation
         std::cout << "Running sequential computation...\n";
         monitor.start();
         auto sequentialResults = computeSequential(stocks);
@@ -181,7 +162,6 @@ int main(int argc, char* argv[]) {
         double sequentialTime = monitor.getElapsedSeconds();
         std::cout << "Sequential time: " << sequentialTime << " seconds\n";
         
-        // Parallel computation
         std::cout << "Running parallel computation...\n";
         monitor.start();
         auto parallelResults = computeParallel(stocks);
@@ -189,7 +169,6 @@ int main(int argc, char* argv[]) {
         double parallelTime = monitor.getElapsedSeconds();
         std::cout << "Parallel time: " << parallelTime << " seconds\n";
         
-        // Calculate speedup
         double speedup = sequentialTime / parallelTime;
         double efficiency = speedup / numThreads;
         
@@ -203,7 +182,6 @@ int main(int argc, char* argv[]) {
         std::cout << "Efficiency: " << std::fixed << std::setprecision(2) 
                   << (efficiency * 100) << "%\n";
         
-        // Validate correctness
         bool resultsMatch = true;
         if (sequentialResults.size() == parallelResults.size()) {
             for (size_t i = 0; i < sequentialResults.size(); ++i) {
@@ -219,7 +197,6 @@ int main(int argc, char* argv[]) {
         
         std::cout << "Results match: " << (resultsMatch ? "Yes" : "No") << "\n\n";
         
-        // Print sample results
         std::cout << "Sample results (first 10):\n";
         std::vector<TechnicalIndicator::IndicatorResult> sampleResults(
             parallelResults.begin(),
@@ -228,14 +205,12 @@ int main(int argc, char* argv[]) {
         printResults(sampleResults);
     }
     
-    // Run scheduler mode if requested
     if (runScheduler) {
         std::cout << "\n=== Starting Scheduler Mode ===\n";
         
         TechnicalIndicator indicator;
-        Scheduler scheduler(10); // 10 second intervals for demo
+        Scheduler scheduler(10);
         
-        // Set up analysis callback
         scheduler.setAnalysisCallback([&indicator, &scheduler](
             const std::vector<TechnicalIndicator::StockData>& stocks) {
             
@@ -249,7 +224,6 @@ int main(int argc, char* argv[]) {
             std::cout << "[Scheduler] Analysis completed in " 
                       << monitor.getElapsedMilliseconds() << " ms\n";
             
-            // Send results to notification queue
             for (const auto& result : results) {
                 scheduler.getNotificationQueue().push(result);
             }
@@ -261,19 +235,15 @@ int main(int argc, char* argv[]) {
                       << result.symbol << " (Strength: " << result.signal_strength << ")\n";
         });
         
-        // Add initial stock data
         for (const auto& stock : stocks) {
             scheduler.addStockData(stock);
         }
         
-        // Start scheduler
         scheduler.start();
         
-        // Run for 30 seconds
         std::cout << "Running scheduler for 30 seconds...\n";
         std::this_thread::sleep_for(std::chrono::seconds(30));
         
-        // Stop scheduler
         scheduler.stop();
         std::cout << "\nScheduler stopped\n";
     }

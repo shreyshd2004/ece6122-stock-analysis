@@ -18,6 +18,7 @@ This project implements a high-performance, parallel stock market analysis syste
 
 - **Data Parallelism (OpenMP)**: Parallelizes technical indicator calculations across multiple stocks using all available CPU cores
 - **Task Parallelism (std::threads)**: Manages concurrent tasks including data fetching, scheduling, and notifications
+- **Socket Programming**: Real-time stock data fetching using TCP/IP socket connections to financial APIs
 - **Thread-Safe Communication**: Uses mutexes and condition variables for safe inter-thread communication
 - **Real-Time Analysis**: Scheduler coordinates hourly analysis cycles with background data updates
 - **Performance Optimization**: Achieves significant speedup (target: 30%+ improvement, ideally reducing minutes to seconds)
@@ -36,7 +37,13 @@ This project implements a high-performance, parallel stock market analysis syste
    - Coordinates background threads (data fetcher, notification dispatcher)
    - Thread-safe queue for inter-thread communication
 
-3. **Integration & Testing** (Tanmay Arvind)
+3. **StockDataFetcher Class** (Shreyashi Dutta)
+   - Socket-based data fetching from financial APIs
+   - TCP/IP socket connections for real-time market data
+   - HTTP client implementation using POSIX sockets
+   - Fallback to sample data if network unavailable
+
+4. **Integration & Testing** (Tanmay Arvind)
    - Main application integration
    - Performance benchmarking and validation
    - Scalability testing
@@ -177,9 +184,17 @@ Signals are generated based on:
 ### Threading Architecture
 
 1. **Scheduler Thread**: Triggers periodic analysis cycles
-2. **Data Fetcher Thread**: Simulates real-time market data updates
+2. **Data Fetcher Thread**: Fetches real-time market data using socket connections
 3. **Notification Dispatcher Thread**: Handles buy/sell signal alerts
 4. **OpenMP Threads**: Parallel computation threads for indicator calculations
+
+### Socket Programming
+
+The system uses POSIX sockets for network communication:
+- **TCP/IP Socket Connections**: Establishes connections to financial data APIs
+- **HTTP Client**: Implements HTTP GET requests over sockets
+- **Real-Time Data Fetching**: Retrieves stock market data via network sockets
+- **Error Handling**: Graceful fallback if network is unavailable
 
 ## Project Structure
 
@@ -188,10 +203,12 @@ finalproject/
 ├── include/
 │   ├── TechnicalIndicator.h    # Indicator computation class
 │   ├── Scheduler.h             # Orchestration and scheduling
-│   └── ThreadSafeQueue.h       # Thread-safe queue implementation
+│   ├── ThreadSafeQueue.h       # Thread-safe queue implementation
+│   └── StockDataFetcher.h       # Socket-based data fetching
 ├── src/
 │   ├── TechnicalIndicator.cpp  # Indicator implementation
 │   ├── Scheduler.cpp           # Scheduler implementation
+│   ├── StockDataFetcher.cpp    # Socket implementation
 │   └── main.cpp                # Main integration and testing
 ├── Makefile                    # Build configuration
 └── README.md                   # This file
@@ -203,10 +220,12 @@ finalproject/
 - **TechnicalIndicator**: Encapsulates technical indicator calculations
 - **Scheduler**: Manages concurrent task orchestration
 - **ThreadSafeQueue**: Thread-safe queue for inter-thread communication
+- **StockDataFetcher**: Socket-based network data fetching
 
-### Multi-threading Topics Used ✓
+### Special Topics Used ✓
 - **OpenMP**: Data parallelism for parallel indicator computation across stocks
 - **std::thread**: Task parallelism for scheduler, data fetcher, and notification dispatcher threads
+- **Sockets**: TCP/IP socket programming for real-time stock data fetching from APIs
 
 ### Measurable Results ✓
 - Performance metrics: Sequential vs parallel execution time

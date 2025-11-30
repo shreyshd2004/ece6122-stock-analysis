@@ -18,7 +18,7 @@ endif
 CXXFLAGS = -std=c++17 -Wall -Wextra -O3 $(OPENMP_FLAGS)
 LDFLAGS = $(OPENMP_LDFLAGS)
 INCLUDES = -I./include
-SOURCES = src/TechnicalIndicator.cpp src/Scheduler.cpp src/main.cpp
+SOURCES = src/TechnicalIndicator.cpp src/Scheduler.cpp src/main.cpp src/StockDataFetcher.cpp
 OBJECTS = $(SOURCES:.cpp=.o)
 TARGET = stock_analyzer
 TEST_TARGET = test_analyzer
@@ -59,7 +59,7 @@ test-large: $(TARGET)
 # Build without OpenMP (fallback)
 no-openmp:
 	$(CXX) -std=c++17 -Wall -Wextra -O3 -I./include \
-		src/TechnicalIndicator.cpp src/Scheduler.cpp src/main.cpp \
+		src/TechnicalIndicator.cpp src/Scheduler.cpp src/main.cpp src/StockDataFetcher.cpp \
 		-o $(TARGET)
 	@echo "Build complete (without OpenMP): $(TARGET)"
 
