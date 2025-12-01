@@ -155,7 +155,9 @@ int main(int argc, char* argv[]) {
     if (benchmark) {
         std::cout << "=== Performance Benchmark ===\n";
         
-        const int iterations = std::max(1, 1000 / numStocks);
+        // Reduce iterations for larger datasets to see actual parallel benefit
+        // For very large datasets, use fewer iterations to avoid making computation too fast
+        const int iterations = (numStocks >= 500) ? 10 : std::max(1, 1000 / numStocks);
         std::cout << "Running " << iterations << " iterations for accurate timing...\n\n";
         
         PerformanceMonitor monitor;
@@ -192,6 +194,7 @@ int main(int argc, char* argv[]) {
             PerformanceVisualizer::plotSpeedup(speedup, numThreads);
             PerformanceVisualizer::plotEfficiency(efficiency, numThreads);
             PerformanceVisualizer::plotExecutionTime(sequentialTime, parallelTime);
+            PerformanceVisualizer::generateAnalysis(speedup, efficiency, numThreads, numStocks);
         } else {
             std::cout << "Speedup: N/A (computation too fast to measure)\n";
             std::cout << "Efficiency: N/A\n";

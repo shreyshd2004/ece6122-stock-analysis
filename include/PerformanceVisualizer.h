@@ -31,6 +31,9 @@ public:
     static void generateReport(double sequentialTime, double parallelTime,
                               double speedup, double efficiency, int numThreads);
     
+    // Generate performance analysis with recommendations
+    static void generateAnalysis(double speedup, double efficiency, int numThreads, int numStocks);
+    
 private:
     static std::string createBar(double value, double maxValue, int width);
 };
