@@ -33,7 +33,6 @@ public:
             endTime_ - startTime_);
         return duration.count() / 1000.0;
     }
-    
 
 private:
     std::chrono::high_resolution_clock::time_point startTime_;
@@ -155,8 +154,6 @@ int main(int argc, char* argv[]) {
     if (benchmark) {
         std::cout << "=== Performance Benchmark ===\n";
         
-        // Reduce iterations for larger datasets to see actual parallel benefit
-        // For very large datasets, use fewer iterations to avoid making computation too fast
         const int iterations = (numStocks >= 500) ? 10 : std::max(1, 1000 / numStocks);
         std::cout << "Running " << iterations << " iterations for accurate timing...\n\n";
         
@@ -230,7 +227,7 @@ int main(int argc, char* argv[]) {
         std::cout << "\n=== Starting Scheduler Mode ===\n";
         
         TechnicalIndicator indicator;
-        Scheduler scheduler(3600); // Hourly analysis cycles
+        Scheduler scheduler(3600);
         
         scheduler.setAnalysisCallback([&indicator, &scheduler](
             const std::vector<TechnicalIndicator::StockData>& stocks) {
@@ -250,7 +247,6 @@ int main(int argc, char* argv[]) {
             }
         });
         
-        // Set up notification callback
         scheduler.setNotificationCallback([](const TechnicalIndicator::IndicatorResult& result) {
             std::cout << "[Notification] " << result.signal << " signal for " 
                       << result.symbol << " (Strength: " << result.signal_strength << ")\n";
@@ -272,4 +268,3 @@ int main(int argc, char* argv[]) {
     std::cout << "\n=== Program Complete ===\n";
     return 0;
 }
-

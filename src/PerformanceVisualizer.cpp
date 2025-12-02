@@ -22,7 +22,6 @@ void PerformanceVisualizer::plotSpeedup(double speedup, int numThreads) {
     double maxValue = std::max(speedup, static_cast<double>(numThreads));
     int barWidth = 60;
     
-    // Scale visualization to show both values clearly
     std::cout << "  Actual:     ";
     int actualBar = std::max(1, static_cast<int>((speedup / maxValue) * barWidth));
     std::cout << std::string(actualBar, '#') << std::string(barWidth - actualBar, ' ') 
@@ -31,7 +30,6 @@ void PerformanceVisualizer::plotSpeedup(double speedup, int numThreads) {
     std::cout << "  Theoretical: ";
     std::cout << std::string(barWidth, '#') << " " << numThreads << "x\n";
     
-    // Add percentage of theoretical
     double percentage = (speedup / numThreads) * 100.0;
     std::cout << "\n  Achievement: " << std::fixed << std::setprecision(1) 
               << percentage << "% of theoretical maximum\n";
@@ -42,7 +40,8 @@ void PerformanceVisualizer::plotSpeedup(double speedup, int numThreads) {
     std::cout << "\n";
 }
 
-void PerformanceVisualizer::plotEfficiency(double efficiency, int /*numThreads*/) {
+void PerformanceVisualizer::plotEfficiency(double efficiency, int numThreads) {
+    (void)numThreads;
     std::cout << "\n╔════════════════════════════════════════════════════════╗\n";
     std::cout << "║          EFFICIENCY VISUALIZATION                      ║\n";
     std::cout << "╠════════════════════════════════════════════════════════╣\n";
@@ -52,14 +51,13 @@ void PerformanceVisualizer::plotEfficiency(double efficiency, int /*numThreads*/
     
     int barWidth = 60;
     int efficiencyBar = static_cast<int>(efficiency * barWidth);
-    efficiencyBar = std::max(1, efficiencyBar); // At least 1 character
+    efficiencyBar = std::max(1, efficiencyBar);
     
     std::cout << "  [";
     std::cout << std::string(efficiencyBar, '=');
     std::cout << std::string(barWidth - efficiencyBar, ' ');
     std::cout << "] " << std::fixed << std::setprecision(1) << (efficiency * 100) << "%\n";
     
-    // Scale markers (simplified)
     std::cout << "  0%";
     std::cout << std::string((barWidth / 2) - 3, ' ') << "50%";
     std::cout << std::string((barWidth / 2) - 3, ' ') << "100%\n\n";
@@ -148,7 +146,7 @@ void PerformanceVisualizer::generateReport(double sequentialTime, double paralle
 
 void PerformanceVisualizer::generateAnalysis(double speedup, double efficiency, 
                                             int numThreads, int numStocks) {
-    (void)efficiency; // May be used in future analysis
+    (void)efficiency;
     std::cout << "\n╔════════════════════════════════════════════════════════╗\n";
     std::cout << "║           PERFORMANCE ANALYSIS                         ║\n";
     std::cout << "╠════════════════════════════════════════════════════════╣\n";
@@ -167,4 +165,3 @@ void PerformanceVisualizer::generateAnalysis(double speedup, double efficiency,
     std::cout << "║ Dataset Size:  " << std::setw(38) << numStocks << " stocks ║\n";
     std::cout << "╚════════════════════════════════════════════════════════╝\n";
 }
-

@@ -140,4 +140,3 @@ void Scheduler::notificationDispatcherThread() {
     
     std::cout << "[NotificationDispatcher] Thread stopped\n";
 }
-
